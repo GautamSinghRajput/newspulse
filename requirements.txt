@@ -1,0 +1,13 @@
+streamlit>=1.40.0
+feedparser>=6.0.11
+sentence-transformers>=3.2.0
+torch>=2.13.0
+scikit-learn>=1.5.2
+pandas>=2.2.3
+plotly>=5.24.0
+google-genai>=0.3.0
+python-dotenv>=1.0.1
+newspaper3k>=0.2.8
+googlenewsdecoder>=0.1.7
+lxml_html_clean>=0.4.0
+pillow>=11.0.0
