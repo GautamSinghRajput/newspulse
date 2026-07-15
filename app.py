@@ -12,7 +12,7 @@ from fetch_news import (
     merge_and_dedupe, enrich_with_full_text, FEEDS,
 )
 from cluster import embed_articles, cluster_articles
-from sentiment import score_articles, cluster_sentiment, sentiment_trend
+from sentiment import score_articles, cluster_sentiment, sentiment_trend, source_sentiment
 from summarize import build_report, compare_framing, expand_query
 import theme
 
@@ -48,23 +48,46 @@ try:
 except Exception:
     pass  # Homepage preview is a nice-to-have; never block the app on it.
 
-with st.container(border=True):
-    st.markdown("##### Search settings")
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        topic = st.text_input(
-            "Search anything (e.g. 'Indian Army', 'AI funding', 'RBI repo rate')",
-            value="AI, funding",
-            help="Not limited to keywords in curated feeds — with Google News "
-                 "search on, any topic works.",
-        )
-    with col2:
-        days_back = st.slider("Look back (days)", 1, 14, 7)
-    with col3:
-        max_articles = st.slider("Max articles", 10, 60, 30)
+LOOKBACK_PRESETS = {"Today": 1, "This Week": 7, "This Month": 30}
+DEPTH_PRESETS = {"Quick": 20, "Standard": 40, "Deep": 60}
 
-    col4, col5 = st.columns(2)
-    with col4:
+col_input, col_button = st.columns([4, 1.2])
+with col_input:
+    topic = st.text_input(
+        "What's the story?",
+        value="AI, funding",
+        label_visibility="collapsed",
+        placeholder="Search any topic — try 'Indian Army', 'AI funding', 'RBI repo rate'…",
+    )
+with col_button:
+    run = st.button("🔴 GO LIVE", type="primary", use_container_width=True)
+
+with st.expander("⚙️ Advanced options"):
+    st.markdown("**Sources**")
+    selected_sources = st.segmented_control(
+        "Sources",
+        options=list(FEEDS.keys()),
+        default=list(FEEDS.keys()),
+        selection_mode="multi",
+        label_visibility="collapsed",
+    )
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("**Look back**")
+        lookback_choice = st.segmented_control(
+            "Look back", options=list(LOOKBACK_PRESETS.keys()),
+            default="This Week", label_visibility="collapsed", required=True,
+        )
+    with col_b:
+        st.markdown("**Depth**")
+        depth_choice = st.segmented_control(
+            "Depth", options=list(DEPTH_PRESETS.keys()),
+            default="Standard", label_visibility="collapsed", required=True,
+        )
+
+    col_c, col_d = st.columns(2)
+    with col_c:
         use_gemini_expansion = st.checkbox(
             "🧠 Personalize with Gemini",
             value=True,
@@ -72,7 +95,7 @@ with st.container(border=True):
                  "'Indian Armed Forces', 'Ministry of Defence India', ...) for "
                  "much better recall than exact keyword matching.",
         )
-    with col5:
+    with col_d:
         use_google_news = st.checkbox(
             "🌐 Include Google News search",
             value=True,
@@ -80,12 +103,10 @@ with st.container(border=True):
                  "curated feeds below — works for any topic.",
         )
 
-    selected_sources = st.multiselect(
-        "Curated feeds (in addition to Google News above)",
-        options=list(FEEDS.keys()), default=list(FEEDS.keys())
-    )
     fetch_full_text = st.checkbox("Download full article text (slower, better quality)", value=True)
-    run = st.button("🔍 Fetch & Analyze", type="primary", use_container_width=True)
+
+days_back = LOOKBACK_PRESETS.get(lookback_choice, 7)
+max_articles = DEPTH_PRESETS.get(depth_choice, 40)
 
 st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
 
@@ -168,13 +189,40 @@ if report:
                     st.markdown(f"- [{a.title}]({a.link}) — *{a.source}*")
 
     with tab2:
+        src_data = source_sentiment(st.session_state.articles, min_articles=2)
+        if src_data:
+            st.markdown("**Sentiment by source**")
+            df_src = pd.DataFrame(src_data)
+            colors = [
+                theme.POSITIVE if s > 0.1 else (theme.NEGATIVE if s < -0.1 else theme.TEXT_SECONDARY)
+                for s in df_src["avg_sentiment"]
+            ]
+            fig_src = px.bar(
+                df_src, x="avg_sentiment", y="source", orientation="h",
+                hover_data={"count": True, "avg_sentiment": ":.2f"},
+            )
+            fig_src.update_traces(marker_color=colors)
+            fig_src.add_vline(x=0, line_dash="dot", line_color=theme.BORDER)
+            fig_src.update_layout(yaxis_title=None, xaxis_title="Average sentiment", height=max(220, 46 * len(df_src)))
+            fig_src = theme.style_plotly(fig_src, force_accent_color=False)
+            st.plotly_chart(fig_src, use_container_width=True)
+            st.caption("Only sources with 2+ articles in this batch are shown — a single article isn't a reliable "
+                       "read on an outlet's overall lean.")
+            st.markdown("<hr class='np-divider'>", unsafe_allow_html=True)
+        else:
+            st.info("Not enough articles per source yet to compare — try a broader search or more sources.")
+
         trend = sentiment_trend(st.session_state.articles)
         if trend:
+            st.markdown("**Sentiment over time**")
             df = pd.DataFrame(trend)
-            fig = px.line(df, x="date", y="avg_sentiment", markers=True, title="Average sentiment over time")
+            fig = px.line(df, x="date", y="avg_sentiment", markers=True)
             fig.add_hline(y=0, line_dash="dot", line_color="#D2D2D7")
             fig = theme.style_plotly(fig)
             st.plotly_chart(fig, use_container_width=True)
+            if len(trend) < 3:
+                st.caption("Only a few days of coverage here — switch to 'This Month' in Advanced options "
+                           "for a more meaningful trend line.")
             st.dataframe(df, use_container_width=True)
         else:
             st.info("Not enough date spread to show a trend yet.")
@@ -195,7 +243,7 @@ if report:
             choice = st.selectbox("Theme", list(options.keys()))
             if st.button("Compare framing across sources"):
                 with st.spinner("Analyzing framing differences..."):
-                    comparison = compare_framing(multi_source_clusters[options[choice]])
-                theme.render_framing_card(comparison)
+                    framing = compare_framing(multi_source_clusters[options[choice]])
+                theme.render_framing_comparison(multi_source_clusters[options[choice]], framing)
 else:
-    st.info("Set your topic and sources above, then click **Fetch & Analyze**.")
+    st.info("Type a topic above, then hit **GO LIVE**.")

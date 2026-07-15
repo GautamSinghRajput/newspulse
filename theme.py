@@ -221,7 +221,7 @@ h1, h2, h3 {{
     margin-bottom: 0.5rem;
 }}
 
-/* ---- Inputs ---- */
+/* ---- Command-bar search input ---- */
 [data-testid="stTextInput"] input,
 [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
 [data-testid="stMultiSelect"] div[data-baseweb="select"] > div {{
@@ -230,6 +230,12 @@ h1, h2, h3 {{
     border-radius: 8px !important;
     color: var(--text-primary) !important;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}}
+[data-testid="stTextInput"] input {{
+    font-size: 1.05rem !important;
+    font-weight: 500;
+    padding: 0.9rem 1rem !important;
+    height: auto !important;
 }}
 [data-testid="stTextInput"] input:focus {{
     border-color: var(--accent) !important;
@@ -263,10 +269,17 @@ button[kind="primary"] {{
     border: none !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
+    font-size: 1rem !important;
+    padding: 0.85rem 1.1rem !important;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     font-family: {HEADLINE_FONT};
     transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    animation: np-breathe 2.6s ease-in-out infinite;
+}}
+@keyframes np-breathe {{
+    0%, 100% {{ box-shadow: 0 0 0 rgba(228,0,43,0); }}
+    50%      {{ box-shadow: 0 0 22px rgba(228,0,43,0.4); }}
 }}
 button[kind="primary"]::after {{
     content: "";
@@ -279,6 +292,7 @@ button[kind="primary"]::after {{
 }}
 button[kind="primary"]:hover::after {{ left: 125%; }}
 button[kind="primary"]:hover {{
+    animation: none;
     background: var(--accent-hover) !important;
     transform: translateY(-1px);
     box-shadow: 0 0 28px rgba(228,0,43,0.5);
@@ -298,6 +312,30 @@ button[kind="secondary"] {{
 button[kind="secondary"]:hover {{
     border-color: var(--accent) !important;
     color: var(--accent) !important;
+    transform: translateY(-1px);
+}}
+
+/* ---- Toggle-style checkboxes: feels like a control-panel switch, not a form field ---- */
+[data-testid="stCheckbox"] {{
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    transition: border-color 0.15s ease;
+}}
+[data-testid="stCheckbox"]:hover {{
+    border-color: var(--accent);
+}}
+
+/* ---- Segmented control chips (preset choices) ---- */
+[data-testid="stSegmentedControl"] {{
+    margin-bottom: 0.4rem;
+}}
+[data-testid="stSegmentedControl"] label {{
+    border-radius: 999px !important;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}}
+[data-testid="stSegmentedControl"] label:hover {{
     transform: translateY(-1px);
 }}
 
@@ -464,16 +502,89 @@ button[kind="secondary"]:hover {{
     color: var(--text-primary) !important;
 }}
 
-/* ---- Framing comparison card ---- */
-.np-framing-card {{
+/* ---- Framing comparison: evidence strip + structured sections ---- */
+.np-evidence-strip {{
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0.75rem 0 1.25rem 0;
+}}
+.np-evidence-row {{
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
     background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-left: 3px solid var(--accent);
     border-radius: 8px;
-    padding: 1.1rem 1.4rem;
-    font-size: 0.98rem;
-    line-height: 1.6;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}}
+.np-evidence-row:hover {{
+    border-color: var(--accent);
+    transform: translateX(2px);
+}}
+.np-evidence-source {{
+    font-family: {HEADLINE_FONT};
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 130px;
+}}
+.np-evidence-title {{
+    font-size: 0.92rem;
+    color: var(--text-primary) !important;
+    line-height: 1.4;
+}}
+.np-framing-verdict {{
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}}
+.np-framing-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.9rem;
+}}
+.np-framing-section {{
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
     animation: np-fade-up 0.5s ease both;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}}
+.np-framing-section:hover {{
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}}
+.np-framing-section-label {{
+    font-family: {HEADLINE_FONT};
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}}
+.np-framing-section-body {{
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-primary);
 }}
 
 a {{ color: var(--accent) !important; text-decoration: none; transition: color 0.15s ease; }}
@@ -559,12 +670,69 @@ def render_headline_cards(articles):
     st.markdown(f'<div class="np-headline-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
 
 
-def render_framing_card(text: str):
-    safe = _html.escape(text).replace("\n", "<br><br>")
-    st.markdown(f'<div class="np-framing-card">{safe}</div>', unsafe_allow_html=True)
+def render_framing_comparison(articles, framing):
+    """
+    Renders the framing/bias comparison as:
+    1. An evidence strip showing each source's actual headline (grounds the
+       analysis in something concrete the user can verify/click into)
+    2. A one-line verdict callout
+    3. Three labeled sections (emphasis / tone / omitted facts) instead of
+       one undifferentiated paragraph
+
+    Defensive: if `framing` comes back as a plain string (e.g. an older
+    version of summarize.compare_framing that hadn't been updated yet),
+    display it as a simple fallback instead of crashing on .get().
+
+    All HTML built as single unbroken lines — see render_headline_cards()
+    docstring for why indentation would break rendering here.
+    """
+    if isinstance(framing, str):
+        st.markdown(f'<div class="np-framing-verdict">{_html.escape(framing)}</div>', unsafe_allow_html=True)
+        st.caption("⚠️ Your summarize.py looks out of date — compare_framing() should return a dict, "
+                   "not a string. Re-copy the latest summarize.py for the structured breakdown.")
+        return
+
+    rows = []
+    for a in articles[:4]:
+        source = _html.escape(a.source)
+        title = _html.escape(a.title)
+        link = _html.escape(a.link, quote=True)
+        rows.append(
+            f'<div class="np-evidence-row">'
+            f'<span class="np-evidence-source">{source}</span>'
+            f'<a class="np-evidence-title" href="{link}" target="_blank" rel="noopener noreferrer">{title}</a>'
+            f'</div>'
+        )
+    st.markdown(f'<div class="np-evidence-strip">{"".join(rows)}</div>', unsafe_allow_html=True)
+
+    if not framing.get("available"):
+        st.warning("Gemini's framing analysis didn't come back in the expected format — try again.")
+        return
+
+    verdict = _html.escape(framing.get("verdict", ""))
+    if verdict:
+        st.markdown(f'<div class="np-framing-verdict">⚖️ {verdict}</div>', unsafe_allow_html=True)
+
+    sections = [
+        ("📍", "Emphasis", framing.get("emphasis", "")),
+        ("🗣️", "Tone &amp; Word Choice", framing.get("tone", "")),
+        ("🔍", "Omitted Facts", framing.get("omitted", "")),
+    ]
+    blocks = []
+    for icon, label, body in sections:
+        if not body:
+            continue
+        safe_body = _html.escape(body)
+        blocks.append(
+            f'<div class="np-framing-section">'
+            f'<div class="np-framing-section-label">{icon} {label}</div>'
+            f'<div class="np-framing-section-body">{safe_body}</div>'
+            f'</div>'
+        )
+    st.markdown(f'<div class="np-framing-grid">{"".join(blocks)}</div>', unsafe_allow_html=True)
 
 
-def style_plotly(fig):
+def style_plotly(fig, force_accent_color: bool = True):
     fig.update_layout(
         font=dict(family=FONT_STACK, size=13, color=TEXT_PRIMARY),
         plot_bgcolor="rgba(0,0,0,0)",
@@ -572,7 +740,8 @@ def style_plotly(fig):
         margin=dict(l=10, r=10, t=40, b=10),
         hoverlabel=dict(bgcolor=BG_SECONDARY, font_family=FONT_STACK, bordercolor=BORDER, font_color=TEXT_PRIMARY),
     )
-    fig.update_traces(line_color=ACCENT, marker=dict(color=ACCENT, size=7))
+    if force_accent_color:
+        fig.update_traces(line_color=ACCENT, marker=dict(color=ACCENT, size=7))
     fig.update_xaxes(showgrid=False, showline=True, linecolor=BORDER, ticks="outside", tickcolor=BORDER, color=TEXT_SECONDARY)
     fig.update_yaxes(showgrid=True, gridcolor=BG_SECONDARY, zeroline=True, zerolinecolor=BORDER, color=TEXT_SECONDARY)
     return fig

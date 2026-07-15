@@ -89,3 +89,25 @@ def sentiment_trend(articles) -> List[dict]:
         if day != "unknown"
     ]
     return trend
+
+
+def source_sentiment(articles, min_articles: int = 1) -> List[dict]:
+    """
+    Average sentiment per outlet across the whole fetched batch — this is
+    the comparison that actually surfaces something useful: which specific
+    sources are framing this topic more positively or negatively than
+    others, rather than one abstract number with nothing to compare it to.
+    Sources with fewer than `min_articles` are dropped (a single article's
+    score isn't a meaningful "outlet lean").
+    """
+    by_source = defaultdict(list)
+    for art in articles:
+        by_source[art.source].append(getattr(art, "sentiment_score", 0.0))
+
+    results = [
+        {"source": src, "avg_sentiment": sum(scores) / len(scores), "count": len(scores)}
+        for src, scores in by_source.items()
+        if len(scores) >= min_articles
+    ]
+    results.sort(key=lambda r: r["avg_sentiment"])
+    return results

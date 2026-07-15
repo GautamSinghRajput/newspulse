@@ -107,14 +107,15 @@ def expand_query(topic: str, max_terms: int = 6) -> List[str]:
     return []
 
 
-def compare_framing(articles) -> str:
+def compare_framing(articles) -> dict:
     """
     Given several articles covering the SAME story from different sources,
-    identify differences in emphasis, word choice, or omitted facts.
-    This is called on-demand (one theme at a time), so it stays a single call.
+    returns a structured breakdown — separate emphasis/tone/omitted-facts
+    sections rather than one prose paragraph — so each dimension of framing
+    difference is individually scannable rather than buried in a blob.
     """
     if len(articles) < 2:
-        return "Not enough distinct sources on this story to compare framing."
+        return {"available": False}
 
     joined = "\n\n".join(
         f"SOURCE: {a.source}\nTITLE: {a.title}\nEXCERPT: {a.text[:600]}"
@@ -122,13 +123,24 @@ def compare_framing(articles) -> str:
     )
     prompt = (
         "The following are excerpts from different news outlets covering the "
-        "same story. Identify concrete differences in how they frame it: "
-        "differences in emphasis, word choice/tone, or facts one source "
-        "includes that another omits. Be specific and cite the source names. "
-        "Keep it to 4-5 sentences.\n\n"
-        f"{joined}"
+        "same story. Analyze concrete differences in how they frame it, "
+        "across exactly three dimensions. For each, name the specific "
+        "source(s) involved — never write generic statements.\n\n"
+        f"{joined}\n\n"
+        "Respond with ONLY a JSON object, no markdown fences, no preamble, "
+        "in this exact shape:\n"
+        '{"emphasis": "1-2 sentences on what each source leads with/foregrounds", '
+        '"tone": "1-2 sentences on charged language or word-choice differences", '
+        '"omitted": "1-2 sentences on facts one source includes that another leaves out", '
+        '"verdict": "one short sentence on which source(s) lean more positive/negative/neutral overall"}'
     )
-    return _call(prompt, max_tokens=350)
+    raw = _call(prompt, max_tokens=450)
+    try:
+        parsed = _extract_json(raw)
+        parsed["available"] = True
+        return parsed
+    except Exception:
+        return {"available": False, "raw": raw}
 
 
 def build_report(clusters: Dict[int, list]) -> List[dict]:
