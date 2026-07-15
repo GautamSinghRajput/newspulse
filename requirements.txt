@@ -2,6 +2,7 @@ streamlit>=1.40.0
 feedparser>=6.0.11
 sentence-transformers>=3.2.0
 torch>=2.13.0
+torchvision
 scikit-learn>=1.5.2
 pandas>=2.2.3
 plotly>=5.24.0
