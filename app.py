@@ -55,7 +55,7 @@ col_input, col_button = st.columns([4, 1.2])
 with col_input:
     topic = st.text_input(
         "What's the story?",
-        value="AI, funding",
+        value="Stock Market",
         label_visibility="collapsed",
         placeholder="Search any topic — try 'Indian Army', 'AI funding', 'RBI repo rate'…",
     )
