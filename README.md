@@ -13,7 +13,7 @@ frame the same story.
   cluster count via silhouette score.
 - **Summarize**: Uses Claude to name each theme and write a 2-3 sentence
   summary of the collective coverage.
-- **Sentiment**: Scores each article locally (DistilBERT sentiment model,
+- **Sentiment**: Scores each article locally (FinBERT sentiment model,
   no API key) and aggregates it per theme and per day for a trend chart.
 - **Bias / framing comparison**: For themes covered by 2+ sources, asks
   Claude to point out concrete differences in emphasis, tone, or omitted
